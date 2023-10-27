@@ -175,25 +175,264 @@ void CheckRailBlocked(int id_trem, int id_trilho)
 
         }
     }
-}
 
-void CheckRailFree(int ID, int n_trilho) {
-    if( (ID == 1 || ID == 2) ) {
+    if((id_trem == 2 || id_trem == 3) && id_trilho == 2) {
 
-        if(n_trilho == 1) {
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
 
-            occupations[n_trilho-1] = 0;
-
-            if(ID == 1 && statusT2 == -1 && whereGoTrain2 == 1) {
-                statusT2 = 1;
-                sem_post( &trens[1] );
+            if(id_trem == 2 && statusT2 != -1) {
+                whereGoTrain2 = 2;
+                statusT2 = -1;
+                sem_wait( &trens[id_trem-1] );
             }
-            else if(ID == 2 && statusT1 == -1 && whereGoTrain1 == 1) {
-                statusT1 = 1;
-                sem_post( &trens[0] );
+            else if(id_trem == 3 && statusT3 != -1) {
+                whereGoTrain3 = 2;
+                statusT3 = -1;
+                sem_wait( &trens[id_trem-1] );
             }
 
         }
 
     }
+
+    if((id_trem == 1 || id_trem == 4) && id_trilho == 3) {
+
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
+
+            if(id_trem == 1 && statusT1 != -1) {
+                whereGoTrain1 = 3;
+                statusT1 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+            else if(id_trem == 4 && statusT4 != -1) {
+                whereGoTrain4 = 3;
+                statusT4 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+
+        }
+    }
+
+    if((id_trem == 2 || id_trem == 4) && id_trilho == 4) {
+
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
+
+            if(id_trem == 2 && statusT2 != -1) {
+                whereGoTrain2 = 4;
+                statusT2 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+            else if(id_trem == 4 && statusT4 != -1) {
+                whereGoTrain4 = 4;
+                statusT4 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+
+        }
+
+    }
+
+    if((id_trem == 2 || id_trem == 5) && id_trilho == 5) {
+
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
+
+            if(id_trem == 2 && statusT2 != -1) {
+                whereGoTrain2 = 5;
+                statusT2 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+            else if(id_trem == 5 && statusT5 != -1) {
+                whereGoTrain5 = 5;
+                statusT5 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+
+        }
+
+    }
+
+    if((id_trem == 3 || id_trem == 5) && id_trilho == 6) {
+
+
+
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
+
+            if(id_trem == 3 && statusT3 != -1) {
+                whereGoTrain3 = 6;
+                statusT3 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+            else if(id_trem == 5 && statusT5 != -1) {
+                whereGoTrain5 = 6;
+                statusT5 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+
+        }
+
+
+
+    }
+
+    if((id_trem == 4 || id_trem == 5) && id_trilho == 7) {
+
+        if( occupations[id_trilho-1] == 0 ) {
+            occupations[id_trilho-1] = id_trem;
+        } else if(occupations[id_trilho-1] != id_trem) {
+
+            if(id_trem == 4 && statusT4 != -1) {
+                whereGoTrain4 = 7;
+                statusT4 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+            else if(id_trem == 5 && statusT5 != -1) {
+                whereGoTrain5 = 7;
+                statusT5 = -1;
+                sem_wait( &trens[id_trem-1] );
+            }
+
+        }
+
+    }
+}
+
+void CheckRailFree(int id_trem, int id_trilho) {
+    if( (id_trem == 1 || id_trem == 2) && id_trilho == 1 ) {
+
+        occupations[id_trilho-1] = 0;
+
+        if(id_trem == 1 && statusT2 == -1 && whereGoTrain2 == 1) {
+            statusT2 = 1;
+            sem_post( &trens[1] );
+        }
+        else if(id_trem == 2 && statusT1 == -1 && whereGoTrain1 == 1) {
+            statusT1 = 1;
+            sem_post( &trens[0] );
+        }
+
+    }
+
+    if( (id_trem == 2 || id_trem == 3) ) {
+
+            if(id_trilho == 2) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 2 && statusT3 == -1 && whereGoTrain3 == 2) {
+                    statusT3 = 1;
+                    sem_post( &trens[2] );
+                }
+                else if(id_trem == 3 && statusT2 == -1 && whereGoTrain2 == 2) {
+                    statusT2 = 1;
+                    sem_post( &trens[1] );
+                }
+
+            }
+
+        }
+
+        if( (id_trem == 1 || id_trem == 4) ) {
+
+            if(id_trilho == 3) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 1 && statusT4 == -1 && whereGoTrain4 == 3) {
+                    statusT4 = 1;
+                    sem_post( &trens[3] );
+                }
+                else if(id_trem == 4 && statusT1 == -1 && whereGoTrain1 == 3) {
+                    statusT1 = 1;
+                    sem_post( &trens[0] );
+                }
+
+            }
+
+        }
+
+        if( (id_trem == 2 || id_trem == 4) ) {
+
+            if(id_trilho == 4) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 2 && statusT4 == -1 && whereGoTrain4 == 4) {
+                    statusT4 = 1;
+                    sem_post( &trens[3] );
+                }
+                else if(id_trem == 4 && statusT2 == -1 && whereGoTrain2 == 4) {
+                    statusT2 = 1;
+                    sem_post( &trens[1] );
+                }
+
+            }
+
+        }
+
+        if( (id_trem == 2 || id_trem == 5) ) {
+
+            if(id_trilho == 5) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 2 && statusT5 == -1 && whereGoTrain5 == 5) {
+                    statusT5 = 1;
+                    sem_post( &trens[4] );
+                }
+                else if(id_trem == 5 && statusT2 == -1 && whereGoTrain2 == 5) {
+                    statusT2 = 1;
+                    sem_post( &trens[1] );
+                }
+
+            }
+
+        }
+
+        if( (id_trem == 3 || id_trem == 5) ) {
+
+            if(id_trilho == 6) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 3 && statusT5 == -1 && whereGoTrain5 == 6) {
+                    statusT5 = 1;
+                    sem_post( &trens[4] );
+                }
+                else if(id_trem == 5 && statusT3 == -1 && whereGoTrain3 == 6) {
+                    statusT3 = 1;
+                    sem_post( &trens[2] );
+                }
+
+            }
+
+        }
+
+        if( (id_trem == 4 || id_trem == 5) ) {
+
+            if(id_trilho == 7) {
+
+                occupations[id_trilho-1] = 0;
+
+                if(id_trem == 4 && statusT5 == -1 && whereGoTrain5 == 7) {
+                    statusT5 = 1;
+                    sem_post( &trens[4] );
+                }
+                else if(id_trem == 5 && statusT4 == -1 && whereGoTrain4 == 7) {
+                    statusT4 = 1;
+                    sem_post( &trens[3] );
+                }
+
+            }
+
+        }
 }
