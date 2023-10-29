@@ -2,31 +2,36 @@
 #include "ui_mainwindow.h"
 #include "semaphore.h"
 
-//Um semáforo para cada trem criado
-sem_t trens[5];
-int occupations[7];
+#define VAZIO 0
+#define MOVENDO 1
+#define PARADO -1
 
-//vazio 0
-//andando 1
-//parado -1
+#define TRILHO_1 1
+#define TRILHO_2 2
+#define TRILHO_3 3
+#define TRILHO_4 4
+#define TRILHO_5 5
+#define TRILHO_6 6
+#define TRILHO_7 7
+#define NENHUM 0
 
-int statusT1 = 1;
-int statusT2 = 1;
-int statusT3 = 1;
-int statusT4 = 1;
-int statusT5 = 1;
+sem_t trens[5]; //Cada trem tem um semaforo
+int ocupacoes[7]; // Cada trilho estara vazio ou determinado trem estara passando, o valor id do trem sera armazenado
 
-//trilhos
-//1,2,3,4,5,6,7 e nenhum 0
+int status_trem1 = MOVENDO;
+int status_trem2 = MOVENDO;
+int status_trem3 = MOVENDO;
+int status_trem4 = MOVENDO;
+int status_trem5 = MOVENDO;
 
-int whereGoTrain1 = 0;
-int whereGoTrain2 = 0;
-int whereGoTrain3 = 0;
-int whereGoTrain4 = 0;
-int whereGoTrain5 = 0;
+int para_onde_t1_esta_indo = NENHUM;
+int para_onde_t2_esta_indo = NENHUM;
+int para_onde_t3_esta_indo = NENHUM;
+int para_onde_t4_esta_indo = NENHUM;
+int para_onde_t5_esta_indo = NENHUM;
 
-void CheckRailBlocked(int id_trem, int id_trilho);
-void CheckRailFree(int id_trem, int id_trilho);
+void verify(int ID, int n_trilho);
+void liberate(int ID, int n_trilho);
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,21 +42,18 @@ MainWindow::MainWindow(QWidget *parent) :
     for(int i = 0; i < 7; i++) {
 
         if(i <= 4)
-        {
             sem_init(&trens[i], 0, 0);
-        }
 
-        occupations[i] = 0;
+        ocupacoes[i] = VAZIO;
 
     }
 
-    //Cria o trem com seu (ID, posição X, posição Y)
-    trem1 = new Trem(1,180,60, 99, CheckRailBlocked, CheckRailFree);
-    trem2 = new Trem(2,450,60, 99, CheckRailBlocked, CheckRailFree);
-    trem3 = new Trem(3,50,180, 99, CheckRailBlocked, CheckRailFree);
-    trem4 = new Trem(4,320,180, 99, CheckRailBlocked, CheckRailFree);
-    trem5 = new Trem(5,590,180, 99, CheckRailBlocked, CheckRailFree);
-
+    //Cria o trem com seu (ID, posição X, posição Y, velocidade inicial)
+    trem1 = new Trem(1, 10, 20, 99, verify, liberate);
+    trem2 = new Trem(2, 410, 20, 99, verify, liberate);
+    trem3 = new Trem(3, 820, 20, 99, verify, liberate);
+    trem4 = new Trem(4, 140, 260, 99, verify, liberate);
+    trem5 = new Trem(5, 680, 260, 99, verify, liberate);
     /*
      * Conecta o sinal UPDATEGUI à função UPDATEINTERFACE.
      * Ou seja, sempre que o sinal UPDATEGUI foi chamado, será executada a função UPDATEINTERFACE.
@@ -91,10 +93,10 @@ void MainWindow::updateInterface(int id, int x, int y){
     case 5: //Atualiza a posição do objeto da tela (quadrado) que representa o trem5
         ui->label_trem5->setGeometry(x,y,21,17);
         break;
-
     default:
         break;
     }
+
 }
 
 MainWindow::~MainWindow()
@@ -102,180 +104,85 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_horizontalSlider_trem_1_valueChanged(int value)
+
+void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
     if(value <= 0)
-           trem1->terminate();
-       else if(value > 0 ) {
-           trem1->start();
-           trem1->changeVel(value);
+        trem1->terminate();
+    else if(value > 0) {
+        trem1->start();
+        trem1->changeVel(value);
     }
 }
 
-void MainWindow::on_horizontalSlider_trem_2_valueChanged(int value)
+void MainWindow::on_horizontalSlider_2_valueChanged(int value)
 {
     if(value <= 0)
-           trem2->terminate();
-       else if(value > 0 ) {
-           trem2->start();
-           trem2->changeVel(value);
+        trem2->terminate();
+    else if(value > 0) {
+        trem2->start();
+        trem2->changeVel(value);
     }
 }
 
-
-void MainWindow::on_horizontalSlider_trem_3_valueChanged(int value)
+void MainWindow::on_horizontalSlider_3_valueChanged(int value)
 {
     if(value <= 0)
-           trem3->terminate();
-       else if(value > 0 ) {
-           trem3->start();
-           trem3->changeVel(value);
+        trem3->terminate();
+    else if(value > 0 ) {
+        trem3->start();
+        trem3->changeVel(value);
     }
 }
 
-
-void MainWindow::on_horizontalSlider_trem_4_valueChanged(int value)
+void MainWindow::on_horizontalSlider_4_valueChanged(int value)
 {
     if(value <= 0)
-           trem4->terminate();
-       else if(value > 0 ) {
-           trem4->start();
-           trem4->changeVel(value);
+        trem4->terminate();
+    else if(value > 0 ) {
+        trem4->start();
+        trem4->changeVel(value);
     }
 }
 
-
-void MainWindow::on_horizontalSlider_trem_5_valueChanged(int value)
+void MainWindow::on_horizontalSlider_5_valueChanged(int value)
 {
     if(value <= 0)
-           trem5->terminate();
-       else if(value > 0 ) {
-           trem5->start();
-           trem5->changeVel(value);
+        trem5->terminate();
+    else if(value > 0 ) {
+        trem5->start();
+        trem5->changeVel(value);
     }
 }
 
-void CheckRailBlocked(int id_trem, int id_trilho)
-{
-    if((id_trem ==1 || id_trem == 2) && id_trilho == 1){
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
+/**
+ * Verifica se o trem pode passar pelo trilho, caso esteja sem nenhum outro trem passando no momento
+ *
+ * @brief verify
+ * @param ID
+ * @param n_trilho
+ */
+void verify(int ID, int n_trilho) {
 
-            if(id_trem == 1 && statusT1 != -1) {
-                whereGoTrain1 = 1;
-                statusT1 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 2 && statusT2 != -1) {
-                whereGoTrain2 = 1;
-                statusT2 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
+    if(ID == 1 || ID == 2) {
 
-        }
-    }
+        if(n_trilho == 1) {
 
-    if((id_trem == 2 || id_trem == 3) && id_trilho == 2) {
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
 
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
+                if(ID == 1 && status_trem1 != PARADO) {
+                    para_onde_t1_esta_indo = TRILHO_1;
+                    status_trem1 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 2 && status_trem2 != PARADO) {
+                    para_onde_t2_esta_indo = TRILHO_1;
+                    status_trem2 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
 
-            if(id_trem == 2 && statusT2 != -1) {
-                whereGoTrain2 = 2;
-                statusT2 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 3 && statusT3 != -1) {
-                whereGoTrain3 = 2;
-                statusT3 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-
-        }
-
-    }
-
-    if((id_trem == 1 || id_trem == 4) && id_trilho == 3) {
-
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
-
-            if(id_trem == 1 && statusT1 != -1) {
-                whereGoTrain1 = 3;
-                statusT1 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 4 && statusT4 != -1) {
-                whereGoTrain4 = 3;
-                statusT4 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-
-        }
-    }
-
-    if((id_trem == 2 || id_trem == 4) && id_trilho == 4) {
-
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
-
-            if(id_trem == 2 && statusT2 != -1) {
-                whereGoTrain2 = 4;
-                statusT2 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 4 && statusT4 != -1) {
-                whereGoTrain4 = 4;
-                statusT4 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-
-        }
-
-    }
-
-    if((id_trem == 2 || id_trem == 5) && id_trilho == 5) {
-
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
-
-            if(id_trem == 2 && statusT2 != -1) {
-                whereGoTrain2 = 5;
-                statusT2 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 5 && statusT5 != -1) {
-                whereGoTrain5 = 5;
-                statusT5 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-
-        }
-
-    }
-
-    if((id_trem == 3 || id_trem == 5) && id_trilho == 6) {
-
-
-
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
-
-            if(id_trem == 3 && statusT3 != -1) {
-                whereGoTrain3 = 6;
-                statusT3 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 5 && statusT5 != -1) {
-                whereGoTrain5 = 6;
-                statusT5 = -1;
-                sem_wait( &trens[id_trem-1] );
             }
 
         }
@@ -284,155 +191,297 @@ void CheckRailBlocked(int id_trem, int id_trilho)
 
     }
 
-    if((id_trem == 4 || id_trem == 5) && id_trilho == 7) {
+    if(ID == 2 || ID == 3) {
 
-        if( occupations[id_trilho-1] == 0 ) {
-            occupations[id_trilho-1] = id_trem;
-        } else if(occupations[id_trilho-1] != id_trem) {
+        if(n_trilho == 2) {
 
-            if(id_trem == 4 && statusT4 != -1) {
-                whereGoTrain4 = 7;
-                statusT4 = -1;
-                sem_wait( &trens[id_trem-1] );
-            }
-            else if(id_trem == 5 && statusT5 != -1) {
-                whereGoTrain5 = 7;
-                statusT5 = -1;
-                sem_wait( &trens[id_trem-1] );
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 2 && status_trem2 != PARADO) {
+                    para_onde_t2_esta_indo = TRILHO_2;
+                    status_trem2 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 3 && status_trem3 != PARADO) {
+                    para_onde_t3_esta_indo = TRILHO_2;
+                    status_trem3 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
             }
 
         }
 
     }
+
+    if(ID == 1 || ID == 4) {
+
+        if(n_trilho == 3) {
+
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 1 && status_trem1 != PARADO) {
+                    para_onde_t1_esta_indo = TRILHO_3;
+                    status_trem1 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 4 && status_trem4 != PARADO) {
+                    para_onde_t4_esta_indo = TRILHO_3;
+                    status_trem4 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
+            }
+
+        }
+
+    }
+
+    if(ID == 2 || ID == 4) {
+
+        if(n_trilho == 4) {
+
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 2 && status_trem2 != PARADO) {
+                    para_onde_t2_esta_indo = TRILHO_4;
+                    status_trem2 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 4 && status_trem4 != PARADO) {
+                    para_onde_t4_esta_indo = TRILHO_4;
+                    status_trem4 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
+            }
+
+        }
+
+    }
+
+    if(ID == 2 || ID == 5) {
+
+        if(n_trilho == 5) {
+
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 2 && status_trem2 != PARADO) {
+                    para_onde_t2_esta_indo = TRILHO_5;
+                    status_trem2 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 5 && status_trem5 != PARADO) {
+                    para_onde_t5_esta_indo = TRILHO_5;
+                    status_trem5 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
+            }
+
+        }
+
+    }
+
+    if(ID == 3 || ID == 5) {
+
+        if(n_trilho == 6) {
+
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 3 && status_trem3 != PARADO) {
+                    para_onde_t3_esta_indo = TRILHO_6;
+                    status_trem3 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 5 && status_trem5 != PARADO) {
+                    para_onde_t5_esta_indo = TRILHO_6;
+                    status_trem5 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
+            }
+
+        }
+
+    }
+
+    if(ID == 4 || ID == 5) {
+
+        if(n_trilho == 7) {
+
+            if( ocupacoes[n_trilho-1] == VAZIO ) {
+                ocupacoes[n_trilho-1] = ID;
+            } else if(ocupacoes[n_trilho-1] != ID) {
+
+                if(ID == 4 && status_trem4 != PARADO) {
+                    para_onde_t4_esta_indo = TRILHO_7;
+                    status_trem4 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+                else if(ID == 5 && status_trem5 != PARADO) {
+                    para_onde_t5_esta_indo = TRILHO_7;
+                    status_trem5 = PARADO;
+                    sem_wait( &trens[ID-1] );
+                }
+
+            }
+
+        }
+
+    }
+
 }
 
-void CheckRailFree(int id_trem, int id_trilho) {
-    if( (id_trem == 1 || id_trem == 2) && id_trilho == 1 ) {
+/**
+ * Assim que um trem passa por um trilho, é liberado o acesso para outro trem que compartilha o trilho
+ *
+ * @brief free
+ * @param ID
+ * @param n_trilho
+ */
+void liberate(int ID, int n_trilho) {
+    if( (ID == 1 || ID == 2) ) {
 
-        occupations[id_trilho-1] = 0;
+        if(n_trilho == 1) {
 
-        if(id_trem == 1 && statusT2 == -1 && whereGoTrain2 == 1) {
-            statusT2 = 1;
-            sem_post( &trens[1] );
-        }
-        else if(id_trem == 2 && statusT1 == -1 && whereGoTrain1 == 1) {
-            statusT1 = 1;
-            sem_post( &trens[0] );
+            ocupacoes[n_trilho-1] = VAZIO;
+
+            if(ID == 1 && status_trem2 == PARADO && para_onde_t2_esta_indo == TRILHO_1) {
+                status_trem2 = MOVENDO;
+                sem_post( &trens[1] );
+            }
+            else if(ID == 2 && status_trem1 == PARADO && para_onde_t1_esta_indo == TRILHO_1) {
+                status_trem1 = MOVENDO;
+                sem_post( &trens[0] );
+            }
+
         }
 
     }
 
-    if( (id_trem == 2 || id_trem == 3) ) {
+    if( (ID == 2 || ID == 3) ) {
 
-            if(id_trilho == 2) {
+        if(n_trilho == 2) {
 
-                occupations[id_trilho-1] = 0;
+            ocupacoes[n_trilho-1] = VAZIO;
 
-                if(id_trem == 2 && statusT3 == -1 && whereGoTrain3 == 2) {
-                    statusT3 = 1;
-                    sem_post( &trens[2] );
-                }
-                else if(id_trem == 3 && statusT2 == -1 && whereGoTrain2 == 2) {
-                    statusT2 = 1;
-                    sem_post( &trens[1] );
-                }
-
+            if(ID == 2 && status_trem3 == PARADO && para_onde_t3_esta_indo == TRILHO_2) {
+                status_trem3 = MOVENDO;
+                sem_post( &trens[2] );
+            }
+            else if(ID == 3 && status_trem2 == PARADO && para_onde_t2_esta_indo == TRILHO_2) {
+                status_trem2 = MOVENDO;
+                sem_post( &trens[1] );
             }
 
         }
 
-        if( (id_trem == 1 || id_trem == 4) ) {
+    }
 
-            if(id_trilho == 3) {
+    if( (ID == 1 || ID == 4) ) {
 
-                occupations[id_trilho-1] = 0;
+        if(n_trilho == 3) {
 
-                if(id_trem == 1 && statusT4 == -1 && whereGoTrain4 == 3) {
-                    statusT4 = 1;
-                    sem_post( &trens[3] );
-                }
-                else if(id_trem == 4 && statusT1 == -1 && whereGoTrain1 == 3) {
-                    statusT1 = 1;
-                    sem_post( &trens[0] );
-                }
+            ocupacoes[n_trilho-1] = VAZIO;
 
+            if(ID == 1 && status_trem4 == PARADO && para_onde_t4_esta_indo == TRILHO_3) {
+                status_trem4 = MOVENDO;
+                sem_post( &trens[3] );
+            }
+            else if(ID == 4 && status_trem1 == PARADO && para_onde_t1_esta_indo == TRILHO_3) {
+                status_trem1 = MOVENDO;
+                sem_post( &trens[0] );
             }
 
         }
 
-        if( (id_trem == 2 || id_trem == 4) ) {
+    }
 
-            if(id_trilho == 4) {
+    if( (ID == 2 || ID == 4) ) {
 
-                occupations[id_trilho-1] = 0;
+        if(n_trilho == 4) {
 
-                if(id_trem == 2 && statusT4 == -1 && whereGoTrain4 == 4) {
-                    statusT4 = 1;
-                    sem_post( &trens[3] );
-                }
-                else if(id_trem == 4 && statusT2 == -1 && whereGoTrain2 == 4) {
-                    statusT2 = 1;
-                    sem_post( &trens[1] );
-                }
+            ocupacoes[n_trilho-1] = VAZIO;
 
+            if(ID == 2 && status_trem4 == PARADO && para_onde_t4_esta_indo == TRILHO_4) {
+                status_trem4 = MOVENDO;
+                sem_post( &trens[3] );
+            }
+            else if(ID == 4 && status_trem2 == PARADO && para_onde_t2_esta_indo == TRILHO_4) {
+                status_trem2 = MOVENDO;
+                sem_post( &trens[1] );
             }
 
         }
 
-        if( (id_trem == 2 || id_trem == 5) ) {
+    }
 
-            if(id_trilho == 5) {
+    if( (ID == 2 || ID == 5) ) {
 
-                occupations[id_trilho-1] = 0;
+        if(n_trilho == 5) {
 
-                if(id_trem == 2 && statusT5 == -1 && whereGoTrain5 == 5) {
-                    statusT5 = 1;
-                    sem_post( &trens[4] );
-                }
-                else if(id_trem == 5 && statusT2 == -1 && whereGoTrain2 == 5) {
-                    statusT2 = 1;
-                    sem_post( &trens[1] );
-                }
+            ocupacoes[n_trilho-1] = VAZIO;
 
+            if(ID == 2 && status_trem5 == PARADO && para_onde_t5_esta_indo == TRILHO_5) {
+                status_trem5 = MOVENDO;
+                sem_post( &trens[4] );
+            }
+            else if(ID == 5 && status_trem2 == PARADO && para_onde_t2_esta_indo == TRILHO_5) {
+                status_trem2 = MOVENDO;
+                sem_post( &trens[1] );
             }
 
         }
 
-        if( (id_trem == 3 || id_trem == 5) ) {
+    }
 
-            if(id_trilho == 6) {
+    if( (ID == 3 || ID == 5) ) {
 
-                occupations[id_trilho-1] = 0;
+        if(n_trilho == 6) {
 
-                if(id_trem == 3 && statusT5 == -1 && whereGoTrain5 == 6) {
-                    statusT5 = 1;
-                    sem_post( &trens[4] );
-                }
-                else if(id_trem == 5 && statusT3 == -1 && whereGoTrain3 == 6) {
-                    statusT3 = 1;
-                    sem_post( &trens[2] );
-                }
+            ocupacoes[n_trilho-1] = VAZIO;
 
+            if(ID == 3 && status_trem5 == PARADO && para_onde_t5_esta_indo == TRILHO_6) {
+                status_trem5 = MOVENDO;
+                sem_post( &trens[4] );
+            }
+            else if(ID == 5 && status_trem3 == PARADO && para_onde_t3_esta_indo == TRILHO_6) {
+                status_trem3 = MOVENDO;
+                sem_post( &trens[2] );
             }
 
         }
 
-        if( (id_trem == 4 || id_trem == 5) ) {
+    }
 
-            if(id_trilho == 7) {
+    if( (ID == 4 || ID == 5) ) {
 
-                occupations[id_trilho-1] = 0;
+        if(n_trilho == 7) {
 
-                if(id_trem == 4 && statusT5 == -1 && whereGoTrain5 == 7) {
-                    statusT5 = 1;
-                    sem_post( &trens[4] );
-                }
-                else if(id_trem == 5 && statusT4 == -1 && whereGoTrain4 == 7) {
-                    statusT4 = 1;
-                    sem_post( &trens[3] );
-                }
+            ocupacoes[n_trilho-1] = VAZIO;
 
+            if(ID == 4 && status_trem5 == PARADO && para_onde_t5_esta_indo == TRILHO_7) {
+                status_trem5 = MOVENDO;
+                sem_post( &trens[4] );
+            }
+            else if(ID == 5 && status_trem4 == PARADO && para_onde_t4_esta_indo == TRILHO_7) {
+                status_trem4 = MOVENDO;
+                sem_post( &trens[3] );
             }
 
         }
+
+    }
+
 }

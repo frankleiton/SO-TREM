@@ -22,15 +22,15 @@ public slots:
 
 private slots:
 
-    void on_horizontalSlider_trem_1_valueChanged(int value);
+    void on_horizontalSlider_valueChanged(int value);
 
-    void on_horizontalSlider_trem_2_valueChanged(int value);
+    void on_horizontalSlider_2_valueChanged(int value);
 
-    void on_horizontalSlider_trem_3_valueChanged(int value);
+    void on_horizontalSlider_3_valueChanged(int value);
 
-    void on_horizontalSlider_trem_4_valueChanged(int value);
+    void on_horizontalSlider_4_valueChanged(int value);
 
-    void on_horizontalSlider_trem_5_valueChanged(int value);
+    void on_horizontalSlider_5_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;

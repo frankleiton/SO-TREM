@@ -4,6 +4,8 @@
 #include <QThread>
 #include <functional>
 
+using namespace std;
+
 /*
  * Classe Trem herda QThread
  * Classe Trem passa a ser uma thread.
@@ -14,9 +16,9 @@
 class Trem: public QThread{
  Q_OBJECT
 public:
-    Trem(int,int,int,int, std::function<void (int, int)>, std::function<void (int, int)>);  //construtor
-    void run();         //função a ser executada pela thread
-    void changeVel(int); //mudar velocidade
+    Trem(int,int,int,int,function<void (int, int)>,function<void (int, int)>);  //construtor
+    void run();             //função a ser executada pela thread
+    void changeVel(int);    //Função chamada pelo slider de um trem para mudar a velocidade deste
 
 //Cria um sinal
 signals:
@@ -27,8 +29,8 @@ private:
    int y;           //posição Y do trem na tela
    int ID;          //ID do trem
    int velocidade;  //Velocidade. É o tempo de dormir em milisegundos entre a mudança de posição do trem
-   std::function<void (int, int)> verify;
-   std::function<void (int, int)> free;
+   function<void (int, int)> verify;
+   function<void (int, int)> liberate;
 };
 
 #endif // TREM_H
